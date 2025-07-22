@@ -7,10 +7,10 @@ const usuarioController = {
     crearUsuario: async (req, res) => {
         const {
             solicita_cobertura, nombres, apellidos, sexo, fecha_nacimiento,
-            estado_cobertura, social, estatus_migratorio, tipo_vivienda,
-            direccion, // <-- ¡CAMBIO: Añadido 'direccion'!
+            social, estatus_migratorio, tipo_vivienda,
+            direccion,
             ciudad, estado, codigo_postal, condado, correo_electronico,
-            phone_1, phone_2, origen_venta, referido, base,
+            phone_1, phone_2, origen_venta, // 'referido' y 'base' eliminados
             pregunta_seguridad, respuesta_seguridad
         } = req.body;
 
@@ -20,14 +20,14 @@ const usuarioController = {
 
             const [result] = await pool.execute(
                 `INSERT INTO usuarios (solicita_cobertura, nombres, apellidos, sexo, fecha_nacimiento,
-                    estado_cobertura, social, estatus_migratorio, tipo_vivienda, direccion, /* <-- ¡CAMBIO: Añadido 'direccion'! */
+                    social, estatus_migratorio, tipo_vivienda, direccion,
                     ciudad, estado, codigo_postal, condado, correo_electronico, phone_1, phone_2,
-                    origen_venta, referido, base, pregunta_seguridad, respuesta_seguridad)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, /* <-- ¡CAMBIO: 22 placeholders! */
+                    origen_venta, pregunta_seguridad, respuesta_seguridad)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, // 19 placeholders
                 [solicita_cobertura, nombres, apellidos, sexo, fecha_nacimiento,
-                    estado_cobertura, social, estatus_migratorio, tipo_vivienda, direccion, /* <-- ¡CAMBIO: Añadido 'direccion'! */
+                    social, estatus_migratorio, tipo_vivienda, direccion,
                     ciudad, estado, codigo_postal, condado, correo_electronico, phone_1, phone_2,
-                    origen_venta, referido, base, pregunta_seguridad, hashedRespuestaSeguridad] /* <-- ¡CAMBIO: 22 valores! */
+                    origen_venta, pregunta_seguridad, hashedRespuestaSeguridad] // 19 valores
             );
             res.status(201).json({ message: 'Usuario creado con éxito', userId: result.insertId });
         } catch (error) {
@@ -42,8 +42,8 @@ const usuarioController = {
     // Obtener todos los usuarios
     getUsuarios: async (req, res) => {
         try {
-            // Seleccionar también la dirección
-            const [rows] = await pool.query('SELECT *, direccion FROM usuarios'); // <-- ¡CAMBIO: Añadido 'direccion'!
+            // Seleccionar también la dirección. Asegúrate que estas columnas existan en tu DB si las seleccionas.
+            const [rows] = await pool.query('SELECT *, direccion FROM usuarios');
             res.status(200).json(rows);
         } catch (error) {
             console.error('Error al obtener usuarios:', error);
@@ -55,8 +55,8 @@ const usuarioController = {
     getUsuarioById: async (req, res) => {
         const { id } = req.params;
         try {
-            // Seleccionar también la dirección
-            const [rows] = await pool.execute('SELECT *, direccion FROM usuarios WHERE id = ?', [id]); // <-- ¡CAMBIO: Añadido 'direccion'!
+            // Seleccionar también la dirección. Asegúrate que estas columnas existan en tu DB si las seleccionas.
+            const [rows] = await pool.execute('SELECT *, direccion FROM usuarios WHERE id = ?', [id]);
             if (rows.length === 0) {
                 return res.status(404).json({ message: 'Usuario no encontrado' });
             }
@@ -72,26 +72,26 @@ const usuarioController = {
         const { id } = req.params;
         const {
             solicita_cobertura, nombres, apellidos, sexo, fecha_nacimiento,
-            estado_cobertura, social, estatus_migratorio, tipo_vivienda,
-            direccion, // <-- ¡CAMBIO: Añadido 'direccion'!
+            social, estatus_migratorio, tipo_vivienda,
+            direccion,
             ciudad, estado, codigo_postal, condado, correo_electronico,
-            phone_1, phone_2, origen_venta, referido, base, pregunta_seguridad, respuesta_seguridad
+            phone_1, phone_2, origen_venta, // 'referido' y 'base' eliminados
+            pregunta_seguridad, respuesta_seguridad
         } = req.body;
 
         try {
-            // Considera si la respuesta de seguridad también se puede actualizar y hashear
             let updateQuery = `
                 UPDATE usuarios SET
                 solicita_cobertura = ?, nombres = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?,
-                estado_cobertura = ?, social = ?, estatus_migratorio = ?, tipo_vivienda = ?, direccion = ?, /* <-- ¡CAMBIO: Añadido 'direccion'! */
+                social = ?, estatus_migratorio = ?, tipo_vivienda = ?, direccion = ?,
                 ciudad = ?, estado = ?, codigo_postal = ?, condado = ?, correo_electronico = ?, phone_1 = ?, phone_2 = ?,
-                origen_venta = ?, referido = ?, base = ?, pregunta_seguridad = ?
-            `;
+                origen_venta = ?, pregunta_seguridad = ?
+            `; // 18 campos para actualizar
             const queryParams = [
                 solicita_cobertura, nombres, apellidos, sexo, fecha_nacimiento,
-                estado_cobertura, social, estatus_migratorio, tipo_vivienda, direccion, /* <-- ¡CAMBIO: Añadido 'direccion'! */
+                social, estatus_migratorio, tipo_vivienda, direccion,
                 ciudad, estado, codigo_postal, condado, correo_electronico, phone_1, phone_2,
-                origen_venta, referido, base, pregunta_seguridad
+                origen_venta, pregunta_seguridad
             ];
 
             if (respuesta_seguridad) { // Si la respuesta de seguridad se está actualizando

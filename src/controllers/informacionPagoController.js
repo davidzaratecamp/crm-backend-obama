@@ -1,16 +1,19 @@
-// backend/src/controllers/informacionPagoController.js
 const pool = require('../config/db');
 
 const informacionPagoController = {
     // Unificar crear y actualizar en una sola función 'upsert'
     crearOActualizarInformacionPago: async (req, res) => {
-        const { usuario_id, ultimos_4_digitos_tarjeta, token_pago, fecha_expiracion_mes, fecha_expiracion_ano } = req.body;
+        const { usuario_id, ultimos_4_digitos_tarjeta, cvv, fecha_expiracion_mes, fecha_expiracion_ano } = req.body; // ✅ 'cvv' en lugar de 'token_pago'
 
-        if (!usuario_id || !ultimos_4_digitos_tarjeta || !token_pago || !fecha_expiracion_mes || !fecha_expiracion_ano) {
+        if (!usuario_id || !ultimos_4_digitos_tarjeta || !cvv || !fecha_expiracion_mes || !fecha_expiracion_ano) { // ✅ 'cvv' en la validación
             return res.status(400).json({ message: 'Todos los campos obligatorios deben ser proporcionados.' });
         }
         if (ultimos_4_digitos_tarjeta.length !== 4 || !/^\d{4}$/.test(ultimos_4_digitos_tarjeta)) {
             return res.status(400).json({ message: 'Los últimos 4 dígitos de la tarjeta deben ser exactamente 4 números.' });
+        }
+        // ✅ Validación para CVV
+        if (!/^\d{3}$/.test(cvv)) {
+            return res.status(400).json({ message: 'El CVV debe ser un número de 3 dígitos.' });
         }
         if (fecha_expiracion_mes < 1 || fecha_expiracion_mes > 12) {
             return res.status(400).json({ message: 'El mes de expiración debe estar entre 1 y 12.' });
@@ -38,17 +41,17 @@ const informacionPagoController = {
                 const pagoId = existingPagoRows[0].id;
                 await pool.execute(
                     `UPDATE informacion_pago SET
-                     ultimos_4_digitos_tarjeta = ?, token_pago = ?, fecha_expiracion_mes = ?, fecha_expiracion_ano = ?
+                     ultimos_4_digitos_tarjeta = ?, cvv = ?, fecha_expiracion_mes = ?, fecha_expiracion_ano = ?
                      WHERE id = ?`,
-                    [ultimos_4_digitos_tarjeta, token_pago, fecha_expiracion_mes, fecha_expiracion_ano, pagoId]
+                    [ultimos_4_digitos_tarjeta, cvv, fecha_expiracion_mes, fecha_expiracion_ano, pagoId] // ✅ 'cvv' en lugar de 'token_pago'
                 );
                 return res.status(200).json({ message: 'Información de pago actualizada con éxito', pagoId: pagoId });
             } else {
                 // Si no existe, crearlo
                 const [result] = await pool.execute(
-                    `INSERT INTO informacion_pago (usuario_id, ultimos_4_digitos_tarjeta, token_pago, fecha_expiracion_mes, fecha_expiracion_ano)
+                    `INSERT INTO informacion_pago (usuario_id, ultimos_4_digitos_tarjeta, cvv, fecha_expiracion_mes, fecha_expiracion_ano)
                      VALUES (?, ?, ?, ?, ?)`,
-                    [usuario_id, ultimos_4_digitos_tarjeta, token_pago, fecha_expiracion_mes, fecha_expiracion_ano]
+                    [usuario_id, ultimos_4_digitos_tarjeta, cvv, fecha_expiracion_mes, fecha_expiracion_ano] // ✅ 'cvv' en lugar de 'token_pago'
                 );
                 return res.status(201).json({ message: 'Información de pago registrada con éxito', pagoId: result.insertId });
             }
@@ -64,10 +67,10 @@ const informacionPagoController = {
     },
 
     // Obtener información de pago de un usuario
-    // Esta función ya estaba bien para el GET del frontend
     getInformacionPagoByUsuario: async (req, res) => {
         const { usuarioId } = req.params;
         try {
+            // ✅ NO se selecciona el CVV por seguridad
             const [rows] = await pool.execute('SELECT id, ultimos_4_digitos_tarjeta, fecha_expiracion_mes, fecha_expiracion_ano FROM informacion_pago WHERE usuario_id = ?', [usuarioId]);
             res.status(200).json(rows); // Devolver siempre un array, incluso si está vacío
         } catch (error) {
@@ -82,13 +85,17 @@ const informacionPagoController = {
     // Actualizar información de pago por ID (si se necesita actualizar un registro de pago específico)
     actualizarInformacionPagoById: async (req, res) => { // Renombrado para evitar confusión
         const { id } = req.params;
-        const { ultimos_4_digitos_tarjeta, token_pago, fecha_expiracion_mes, fecha_expiracion_ano } = req.body;
+        const { ultimos_4_digitos_tarjeta, cvv, fecha_expiracion_mes, fecha_expiracion_ano } = req.body; // ✅ 'cvv' en lugar de 'token_pago'
 
-        if (!ultimos_4_digitos_tarjeta || !token_pago || !fecha_expiracion_mes || !fecha_expiracion_ano) {
+        if (!ultimos_4_digitos_tarjeta || !cvv || !fecha_expiracion_mes || !fecha_expiracion_ano) { // ✅ 'cvv' en la validación
             return res.status(400).json({ message: 'Todos los campos obligatorios deben ser proporcionados.' });
         }
         if (ultimos_4_digitos_tarjeta.length !== 4 || !/^\d{4}$/.test(ultimos_4_digitos_tarjeta)) {
             return res.status(400).json({ message: 'Los últimos 4 dígitos de la tarjeta deben ser exactamente 4 números.' });
+        }
+        // ✅ Validación para CVV
+        if (!/^\d{3}$/.test(cvv)) {
+            return res.status(400).json({ message: 'El CVV debe ser un número de 3 dígitos.' });
         }
         // Validaciones de fecha de expiración como arriba
         const currentYear = new Date().getFullYear();
@@ -101,9 +108,9 @@ const informacionPagoController = {
         try {
             const [result] = await pool.execute(
                 `UPDATE informacion_pago SET
-                ultimos_4_digitos_tarjeta = ?, token_pago = ?, fecha_expiracion_mes = ?, fecha_expiracion_ano = ?
+                ultimos_4_digitos_tarjeta = ?, cvv = ?, fecha_expiracion_mes = ?, fecha_expiracion_ano = ?
                  WHERE id = ?`,
-                [ultimos_4_digitos_tarjeta, token_pago, fecha_expiracion_mes, fecha_expiracion_ano, id]
+                [ultimos_4_digitos_tarjeta, cvv, fecha_expiracion_mes, fecha_expiracion_ano, id] // ✅ 'cvv' en lugar de 'token_pago'
             );
             if (result.affectedRows === 0) {
                 return res.status(404).json({ message: 'Información de pago no encontrada' });
