@@ -7,22 +7,20 @@ const dependienteController = {
         const { usuarioId } = req.params; // ID del usuario principal
         const {
             parentesco, solicita_cobertura, nombres, apellidos, sexo,
-            direccion, // <-- ¡CAMBIO: Añadido 'direccion'!
+            // direccion, // <-- ¡ELIMINAR ESTA LÍNEA!
             fecha_nacimiento, social, estatus_migratorio, medicare_medicaid,
-            estado, condado, ciudad // Campos de LocationSelector
+            estado, condado, ciudad
         } = req.body;
 
         try {
             const [result] = await pool.execute(
                 `INSERT INTO dependientes (usuario_id, parentesco, solicita_cobertura, nombres, apellidos, sexo,
-                    direccion, /* <-- ¡CAMBIO: Añadido 'direccion'! */
                     fecha_nacimiento, social, estatus_migratorio, medicare_medicaid,
-                    estado, condado, ciudad) /* <-- Asumo que también guardarás esto aquí */
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, /* <-- ¡CAMBIO: 14 placeholders! */
+                    estado, condado, ciudad)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, // <-- ¡AHORA SON 13 placeholders!
                 [usuarioId, parentesco, solicita_cobertura, nombres, apellidos, sexo,
-                    direccion, /* <-- ¡CAMBIO: Añadido 'direccion'! */
                     fecha_nacimiento, social, estatus_migratorio, medicare_medicaid,
-                    estado, condado, ciudad] /* <-- ¡CAMBIO: 14 valores! */
+                    estado, condado, ciudad] // <-- ¡AHORA SON 13 valores!
             );
             res.status(201).json({ message: 'Dependiente creado con éxito', dependienteId: result.insertId });
         } catch (error) {
@@ -35,8 +33,8 @@ const dependienteController = {
     getDependientesByUsuario: async (req, res) => {
         const { usuarioId } = req.params;
         try {
-            // Seleccionar también la dirección
-            const [rows] = await pool.execute('SELECT *, direccion FROM dependientes WHERE usuario_id = ?', [usuarioId]); // <-- ¡CAMBIO: Añadido 'direccion'!
+            // Seleccionar TODOS los campos EXCEPTO direccion (o solo los que necesitas explícitamente)
+            const [rows] = await pool.execute('SELECT id, usuario_id, parentesco, solicita_cobertura, nombres, apellidos, sexo, fecha_nacimiento, social, estatus_migratorio, medicare_medicaid, estado, condado, ciudad FROM dependientes WHERE usuario_id = ?', [usuarioId]);
             res.status(200).json(rows);
         } catch (error) {
             console.error('Error al obtener dependientes por usuario:', error);
@@ -48,8 +46,8 @@ const dependienteController = {
     getDependienteById: async (req, res) => {
         const { id } = req.params;
         try {
-            // Seleccionar también la dirección
-            const [rows] = await pool.execute('SELECT *, direccion FROM dependientes WHERE id = ?', [id]); // <-- ¡CAMBIO: Añadido 'direccion'!
+            // Seleccionar TODOS los campos EXCEPTO direccion
+            const [rows] = await pool.execute('SELECT id, usuario_id, parentesco, solicita_cobertura, nombres, apellidos, sexo, fecha_nacimiento, social, estatus_migratorio, medicare_medicaid, estado, condado, ciudad FROM dependientes WHERE id = ?', [id]);
             if (rows.length === 0) {
                 return res.status(404).json({ message: 'Dependiente no encontrado' });
             }
@@ -65,21 +63,19 @@ const dependienteController = {
         const { id } = req.params;
         const {
             parentesco, solicita_cobertura, nombres, apellidos, sexo,
-            direccion, // <-- ¡CAMBIO: Añadido 'direccion'!
+            // direccion, // <-- ¡ELIMINAR ESTA LÍNEA!
             fecha_nacimiento, social, estatus_migratorio, medicare_medicaid,
-            estado, condado, ciudad // Campos de LocationSelector
+            estado, condado, ciudad
         } = req.body;
 
         try {
             const [result] = await pool.execute(
                 `UPDATE dependientes SET
                 parentesco = ?, solicita_cobertura = ?, nombres = ?, apellidos = ?, sexo = ?,
-                direccion = ?, /* <-- ¡CAMBIO: Añadido 'direccion'! */
                 fecha_nacimiento = ?, social = ?, estatus_migratorio = ?, medicare_medicaid = ?,
-                estado = ?, condado = ?, ciudad = ? /* <-- Asegúrate de que estos coincidan */
+                estado = ?, condado = ?, ciudad = ?
                  WHERE id = ?`,
                 [parentesco, solicita_cobertura, nombres, apellidos, sexo,
-                    direccion, /* <-- ¡CAMBIO: Añadido 'direccion'! */
                     fecha_nacimiento, social, estatus_migratorio, medicare_medicaid,
                     estado, condado, ciudad, id]
             );
@@ -93,21 +89,20 @@ const dependienteController = {
         }
     },
     
-    // Eliminar un dependiente por su ID
-eliminarDependiente: async (req, res) => {
-    const { id } = req.params;
-    try {
-        const [result] = await pool.execute('DELETE FROM dependientes WHERE id = ?', [id]);
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Dependiente no encontrado' });
+    // Eliminar un dependiente por su ID (no necesita cambios)
+    eliminarDependiente: async (req, res) => {
+        const { id } = req.params;
+        try {
+            const [result] = await pool.execute('DELETE FROM dependientes WHERE id = ?', [id]);
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ message: 'Dependiente no encontrado' });
+            }
+            res.status(200).json({ message: 'Dependiente eliminado con éxito' });
+        } catch (error) {
+            console.error('Error al eliminar dependiente:', error);
+            res.status(500).json({ message: 'Error interno del servidor al eliminar dependiente' });
         }
-        res.status(200).json({ message: 'Dependiente eliminado con éxito' });
-    } catch (error) {
-        console.error('Error al eliminar dependiente:', error);
-        res.status(500).json({ message: 'Error interno del servidor al eliminar dependiente' });
     }
-}
-
 };
 
 module.exports = dependienteController;
