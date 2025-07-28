@@ -11,6 +11,7 @@ const ingresosRoutes = require('./routes/ingresosRoutes');
 const planSaludRoutes = require('./routes/planSaludRoutes');
 const informacionPagoRoutes = require('./routes/informacionPagoRoutes');
 const evidenciaRoutes = require('./routes/evidenciaRoutes'); 
+const general = require('./routes/General.route');
 // ... importa otras rutas
 
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api', informacionPagoRoutes);
 //app.use('/api/informacion_pago', informacionPagoRoutes);
 app.use('/api', evidenciaRoutes);
 // ... monta otras rutas aquí si las tienes
+app.use("/", general)
 
 // Iniciar servidor
 app.listen(PORT, () => {
