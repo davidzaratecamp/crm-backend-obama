@@ -1,4 +1,4 @@
-//src/routes/usuarioRoutes.js
+// src/routes/usuarioRoutes.js
 const express = require('express');
 const router = express.Router();
 const usuarioController = require('../controllers/usuarioController');
@@ -10,6 +10,9 @@ router.post('/', usuarioController.crearUsuario);
 
 // GET /api/usuarios - Obtener todos los usuarios
 router.get('/', usuarioController.getUsuarios);
+
+// GET /api/usuarios/pendientes - ✅ NUEVA RUTA: Obtener usuarios con estado_registro = 'pendiente'
+router.get('/pendientes', usuarioController.getUsuariosPendientes); // Colócala antes de /:id para evitar conflicto
 
 // GET /api/usuarios/:id - Obtener un usuario por ID
 router.get('/:id', usuarioController.getUsuarioById);

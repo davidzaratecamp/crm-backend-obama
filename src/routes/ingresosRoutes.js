@@ -1,3 +1,4 @@
+//src/routes/ingresosRoutes.js
 const express = require('express');
 const router = express.Router();
 const ingresosController = require('../controllers/ingresosController');
@@ -15,5 +16,9 @@ router.put('/:id', ingresosController.actualizarIngreso);
 
 // DELETE /api/ingresos/:id - Eliminar un registro de ingreso por su ID
 router.delete('/:id', ingresosController.eliminarIngreso);
+
+// NUEVA RUTA: GET /api/ingresos/all/:userId - Obtener todos los ingresos de un usuario principal y sus dependientes
+router.get('/all/:userId', ingresosController.getAllIngresosForUserAndDependents);
+
 
 module.exports = router;

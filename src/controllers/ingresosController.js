@@ -1,3 +1,5 @@
+// backend/controllers/ingresosController.js
+
 const pool = require('../config/db');
 
 const ingresosController = {
@@ -71,7 +73,43 @@ const ingresosController = {
             console.error('Error al eliminar ingreso:', error);
             res.status(500).json({ message: 'Error interno del servidor al eliminar ingreso' });
         }
+    },
+
+    getAllIngresosForUserAndDependents: async (req, res) => {
+        const { userId } = req.params;
+        console.log("Backend: getAllIngresosForUserAndDependents called for userId:", userId); // DEBUG 1
+
+        try {
+            // Obtener el ID de todos los dependientes asociados a este userId
+            const [dependientesRows] = await pool.execute(
+                'SELECT id FROM dependientes WHERE usuario_id = ?',
+                [userId]
+            );
+            const dependentIds = dependientesRows.map(dep => dep.id);
+            console.log("Backend: Dependent IDs found for userId", userId, ":", dependentIds); // DEBUG 2
+
+            let query = `SELECT * FROM ingresos WHERE (tipo_entidad = 'Usuario' AND entidad_id = ?)`;
+            let params = [userId];
+
+            if (dependentIds.length > 0) {
+                const placeholders = dependentIds.map(() => '?').join(',');
+                query += ` OR (tipo_entidad = 'Dependiente' AND entidad_id IN (${placeholders}))`;
+                params = params.concat(dependentIds);
+            }
+
+            console.log("Backend: Final SQL Query:", query); // DEBUG 3
+            console.log("Backend: Final SQL Params:", params); // DEBUG 4
+
+            const [rows] = await pool.execute(query, params);
+            console.log("Backend: Rows fetched from DB:", rows); // DEBUG 5
+            res.status(200).json(rows);
+        } catch (error) {
+            console.error('Backend: Error al obtener todos los ingresos para usuario y dependientes:', error); // DEBUG 6
+            res.status(500).json({ message: 'Error interno del servidor al obtener ingresos completos' });
+        }
     }
 };
 
-module.exports = ingresosController;
+
+
+module.exports = ingresosController; // Esto exporta el objeto completo con todas sus propiedades
