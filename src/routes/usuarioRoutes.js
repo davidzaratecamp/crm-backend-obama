@@ -23,4 +23,8 @@ router.put('/:id', usuarioController.actualizarUsuario);
 // DELETE /api/usuarios/:id - Eliminar un usuario por ID
 router.delete('/:id', usuarioController.eliminarUsuario);
 
+// Ruta para obtener el conteo de ventas por asesor en un rango de fechas
+router.get('/ventasPorAsesor/:fechaInicio/:fechaFin', usuarioController.getVentasPorAsesor);
+
+
 module.exports = router;

@@ -1,29 +1,31 @@
-require('dotenv').config(); // ✅ Cargar variables de entorno primero
+// src/app.js
+
+// Cargar variables de entorno primero
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const pool = require('./config/db'); 
+const pool = require('./config/db'); // Asumiendo que db.js está en src/config/
 
-const usuarioRoutes = require('./routes/usuarioRoutes'); // Importa las rutas de usuario
+// Importar rutas (asegúrate de que estas rutas también sean correctas)
+const usuarioRoutes = require('./routes/usuarioRoutes');
 const dependienteRoutes = require('./routes/dependienteRoutes');
 const ingresosRoutes = require('./routes/ingresosRoutes');
 const planSaludRoutes = require('./routes/planSaludRoutes');
 const informacionPagoRoutes = require('./routes/informacionPagoRoutes');
-const evidenciaRoutes = require('./routes/evidenciaRoutes'); 
+const evidenciaRoutes = require('./routes/evidenciaRoutes');
 const general = require('./routes/General.route');
-// ... importa otras rutas
+const auditorRoutes = require('./routes/auditorRoutes');
+const personalRoutes = require('./routes/personalRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PUERTO = process.env.PUERTO || 3001;
 
 app.use(cors());
 app.use(express.json());
 
-// Servir archivos estáticos desde /uploads
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// ✅ Probar conexión a la base de datos
+// Probar conexión a la base de datos
 (async () => {
     try {
         const connection = await pool.getConnection();
@@ -34,18 +36,36 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
     }
 })();
 
-// Montar rutas
+// --- INICIO DE LA SOLUCIÓN ---
+
+// La ruta ahora sube un nivel ('..') desde 'src' para encontrar la carpeta 'public'.
+const audiosPath = path.join(__dirname, '..', 'public/audios');
+
+// Mensaje de depuración para confirmar la ruta correcta
+console.log(`Sirviendo archivos de audio desde la carpeta: ${audiosPath}`);
+
+// Servir los archivos estáticos desde la ruta corregida.
+app.use('/audios', express.static(audiosPath));
+
+// --- FIN DE LA SOLUCIÓN ---
+
+
+// Montar rutas de la API
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api', dependienteRoutes);
 app.use('/api/ingresos', ingresosRoutes);
 app.use('/api/planes_salud', planSaludRoutes);
 app.use('/api', informacionPagoRoutes);
-//app.use('/api/informacion_pago', informacionPagoRoutes);
 app.use('/api', evidenciaRoutes);
-// ... monta otras rutas aquí si las tienes
-app.use("/", general)
+app.use("/", general);
+app.use('/api/_auditor', auditorRoutes);
+
+// Montar las rutas para el personal
+app.use('/api/_admin', personalRoutes);
+app.use('/api/_asesor', personalRoutes);
+app.use('/api/_auth', personalRoutes);
 
 // Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
+app.listen(PUERTO, () => {
+    console.log(`Servidor backend corriendo en http://localhost:${PUERTO}`);
 });
